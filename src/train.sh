@@ -35,10 +35,13 @@ export WANDB_DISABLED=true
 
 set -x
 
+# Dataset
 dataset_name=openwebtext_wordlength # dataset
-seed=1111 # random seed
+n_gpu=1 # number of GPUs
 
-model_name_or_path=gpt2
+# Model training parameters
+seed=1111 # random seed
+model_name_or_path=gpt2 # update this to a checkpoint path if you want to finetune from a checkpoint
 per_device_train_batch_size=4
 gradient_accumulation_steps=1
 max_steps=10000
@@ -68,5 +71,4 @@ python src/run_clm.py \
     --save_steps $save_steps \
     --dataset_name $dataset_name \
     --seed $seed \
-    --fp16 \
     ${rest_args}
