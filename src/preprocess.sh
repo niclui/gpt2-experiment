@@ -16,11 +16,19 @@ input_dataset_name=$1
 output_dataset_name=$2
 tokenizer_name=$3
 num_total_chunks=${4:-64}
-num_chunks=${5:-10} # only process a subset of the total chunks. Set to num_total_chunks to process full dataset
+if [ $input_dataset_name = "openwebtext_tiny" ]
+then
+  num_chunks=$num_total_chunks
+  echo "num_chunks is set to num_total_chunks: $num_chunks"
+else
+  num_chunks=${5:-10} # only process a subset of the total chunks. Set to num_total_chunks to process full dataset
+  echo "num_chunks is set to: $num_chunks"
+fi  
 
 mkdir -p $output_dataset_name
 
 # Process the chunks in parallel
+# Basically simultaneously run many commands that process a chunk each
 for ((CHUNK_IDX=0; CHUNK_IDX < $num_chunks; CHUNK_IDX++)); do
   python src/process_data.py \
     --data_dir $input_dataset_name \

@@ -43,6 +43,7 @@ def write_record(record, fp):
 
 def tag_word_length(doc):
     # split the document into sentences
+    # adds the word length for us.. hooray!
     sents = sent_tokenize(json.loads(doc)['text'])
     new_sents = []
     for sent in sents:
@@ -57,7 +58,7 @@ def process_fn(save_dir, split, txt_data):
 
     # count lines
     count = linecount(txt_data)
-
+    # Interesting, there's no need to use a "standard" chunk size
     chunk_size = count // args.total_chunks
     chunk_start_idx = chunk_size * args.chunk_idx
     chunk_end_idx = chunk_size * (args.chunk_idx + 1)

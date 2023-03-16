@@ -32,12 +32,16 @@ if __name__ == "__main__":
     parser.add_argument('--model_dir', type=str, help="where the trained model is saved. Can also input a huggingface model name like gpt2 to get the default pretrained model.")
     parser.add_argument('--eval_data_dir', type=str, help="directory of the evaluation data")
     parser.add_argument('--eval_num_examples', type=int, default=None, help="number of examples to evaluate on")
-    parser.add_argument('--cuda', action='store_true', help="number of examples to evaluate on")
+    parser.add_argument('--cuda', action='store_true', help="use gpu")
     args = parser.parse_args()
 
     # load the model, tokenizer
+    # load the tokenizer module of out "improved" GPT2 to tokenize the sentence (sentence -> tokens -> token_ids)
+    # with "Auto", Hugging Face will guess our architecture by looking at our model
     tokenizer = AutoTokenizer.from_pretrained(args.model_dir, **tokenizer_kwargs)
 
+    # Load model checkpoint
+    # causal LM is basically typical language modelling with token generation
     model = AutoModelForCausalLM.from_pretrained(
                 args.model_dir,
                 from_tf=False,
@@ -48,6 +52,7 @@ if __name__ == "__main__":
     if args.cuda:
         model.cuda()
 
+    # Load evaluation data that we create in create_wordlength_eval_data.py
     eval_data_dir = Path(args.eval_data_dir)
 
     metrics = []
@@ -58,15 +63,16 @@ if __name__ == "__main__":
         predicted_labels = []
         with open(eval_data_path, 'r') as fin:
             for i, line in tqdm(enumerate(fin)):
-                if args.eval_num_examples and i >= args.eval_num_examples:
+                if args.eval_num_examples and i >= args.eval_num_examples: # Only evaluate X number of examples
                     break
                 row = json.loads(line)
                 prefix = row['text']
                 num_words = int(row['num_words'])
-                labels.append(num_words)
+                labels.append(num_words) # store the true number of words that we specified earl
 
                 # tokenize
                 if args.cuda:
+                    # Tokenizes the starting prompt which is of the form: "<len> num_words <text>"
                     input_ids = tokenizer.encode(prefix, return_tensors="pt").cuda()
                 else:
                     input_ids = tokenizer.encode(prefix, return_tensors="pt")
@@ -76,9 +82,11 @@ if __name__ == "__main__":
                                    max_length=200,
                                    top_k=5)
                 # un-tokenize
+                # basically converts token_ids into words for the sample output
                 decoded_output = tokenizer.decode(sample_output[0], skip_special_tokens=False)
 
                 # parse the output
+                # this returns only the generated sentence
                 decoded_output = decoded_output.split('<text>')[1]
                 decoded_output = decoded_output.split('<len>')[0].strip()
                 generations.append(decoded_output)
@@ -101,6 +109,7 @@ if __name__ == "__main__":
             print(f"TARGET NUM_WORDS: {num_words}, GENERATED_NUM_WORDS: {generated_num_words}, GENERATION: {generation}")
 
         print("=================================")
+        # this calculates the mean absolute error
         metric = np.mean(np.abs(labels - predicted_labels))
         print(f"Metric for wordlength: {metric:.4f}")
         metrics.append(metric)
