@@ -19,7 +19,7 @@ num_total_chunks=${4:-64}
 if [ $input_dataset_name = "openwebtext_tiny" ]
 then
   num_chunks=$num_total_chunks
-  echo "num_chunks is set to num_total_chunks: $num_chunks"
+  echo "num_chunks is set to num_total_chunks: $num_total_chunks"
 else
   num_chunks=${5:-10} # only process a subset of the total chunks. Set to num_total_chunks to process full dataset
   echo "num_chunks is set to: $num_chunks"

@@ -23,6 +23,8 @@
 #     exit 1
 # fi
 
+set -x
+
 CACHE=./cache
 mkdir -p $CACHE
 
@@ -36,31 +38,34 @@ export WANDB_DISABLED=true
 set -x
 
 # Dataset
-dataset_name=openwebtext_wordlength # dataset
-n_gpu=1 # number of GPUs
+dataset_name=/dev/openwebtext_wordlength # dataset
+n_gpu=7 # number of GPUs
 
 # Model training parameters
-seed=1111 # random seed
-model_name_or_path=gpt2 # update this to a checkpoint path if you want to finetune from a checkpoint
+seed=123 # random seed
+model_name_or_path=gpt2
 per_device_train_batch_size=4
-gradient_accumulation_steps=1
-max_steps=10000
+gradient_accumulation_steps=2
+max_steps=80000
 learning_rate=1e-6
-warmup_steps=0
-save_steps=2000
+warmup_steps=5000
+save_steps=5000
 
-python src/run_clm.py \
+CUDA_VISIBLE_DEVICES="0,1,2,3,4,5" python -m torch.distributed.launch \
+                                            --nproc_per_node 6 \
+                                            src/run_clm.py \
+    --ddp_find_unused_parameters False\
     --model_name_or_path $model_name_or_path \
     --block_size 1024 \
     --do_train \
     --do_eval \
-    --logging_steps 100 \
+    --logging_steps 2500 \
     --evaluation_strategy steps \
-    --max_eval_samples 100 \
+    --max_eval_samples 200 \
     --preprocessing_num_workers 8 \
     --tokenized_data_dir ${dataset_name}/tokenized_grouped \
     --output_dir ${dataset_name}_seed${seed} \
-    --save_steps 10000 \
+    --save_steps $save_steps \
     --lr_scheduler_type linear \
     --seed $seed \
     --per_device_train_batch_size $per_device_train_batch_size \
@@ -71,4 +76,5 @@ python src/run_clm.py \
     --save_steps $save_steps \
     --dataset_name $dataset_name \
     --seed $seed \
+    --overwrite_output_dir \
     ${rest_args}
