@@ -14,4 +14,5 @@ eval_data_dir=$1; shift
 python src/evaluate_wordlength_model.py \
   --model_dir ${model_dir} \
   --eval_data_dir ${eval_data_dir} \
+  --cuda \
   "$@"
