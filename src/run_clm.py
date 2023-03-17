@@ -20,6 +20,7 @@ Here is the full list of checkpoints on the hub that can be fine-tuned by this s
 https://huggingface.co/models?filter=causal-lm
 """
 # You can also adapt this script on your own causal language modeling task. Pointers for this are left as comments.
+from models.length_trainer import LengthTrainer
 
 import logging
 import math
@@ -359,7 +360,7 @@ def main():
             eval_dataset = eval_dataset.select(range(data_args.max_eval_samples))
 
     # Initialize our Trainer
-    trainer = Trainer(
+    trainer = LengthTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset if training_args.do_train else None,

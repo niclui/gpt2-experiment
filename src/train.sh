@@ -38,22 +38,20 @@ export WANDB_DISABLED=true
 set -x
 
 # Dataset
-dataset_name=/dev/openwebtext_wordlength # dataset
-n_gpu=7 # number of GPUs
+dataset_name=openwebtext_tiny_pro # dataset
+n_gpu=4 # number of GPUs
 
 # Model training parameters
 seed=123 # random seed
 model_name_or_path=gpt2
 per_device_train_batch_size=4
 gradient_accumulation_steps=2
-max_steps=80000
+max_steps=20000
 learning_rate=1e-6
-warmup_steps=5000
-save_steps=5000
+warmup_steps=0
+save_steps=2000
 
-CUDA_VISIBLE_DEVICES="0,1,2,3,4,5" python -m torch.distributed.launch \
-                                            --nproc_per_node 6 \
-                                            src/run_clm.py \
+python src/run_clm.py \
     --ddp_find_unused_parameters False\
     --model_name_or_path $model_name_or_path \
     --block_size 1024 \
@@ -61,7 +59,7 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5" python -m torch.distributed.launch \
     --do_eval \
     --logging_steps 2500 \
     --evaluation_strategy steps \
-    --max_eval_samples 200 \
+    --max_eval_samples 5 \
     --preprocessing_num_workers 8 \
     --tokenized_data_dir ${dataset_name}/tokenized_grouped \
     --output_dir ${dataset_name}_seed${seed} \
